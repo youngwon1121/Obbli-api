@@ -38,10 +38,12 @@ class ProfileView(generics.ListCreateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticatedAndOwner,)
 
+    #in get request
     def get_queryset(self):
         owner = self.request.user
         return Profile.objects.filter(owner__userid=owner.userid)
 
+    #perform_create is used to save serializer in post request
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
