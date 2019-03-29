@@ -7,13 +7,12 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .serializers import ProfileSerializer, UserSerializer
 from .models import Profile
-from .permissions import IsAuthenticatedAndOwner
+from .permissions import IsProfileOwner
 
 User = get_user_model()
 
 class LogInView(APIView):
     def post(self, request, *args, **kwargs):
-        print("Hello LogIn STARTED")
         userid = request.data.get('userid')
         password = request.data.get('password')
 
@@ -29,16 +28,23 @@ class LogInView(APIView):
         return Response({'token' : token.key},
             status=status.HTTP_201_CREATED
         )
-    
+
 class JoinView(generics.CreateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
+class MyPageView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return User.objects.filter(id=self.request.user.id)
+
 class ProfileView(generics.ListCreateAPIView):
     serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticatedAndOwner,)
+    permission_classes = (IsAuthenticated,)
 
-    #in get request
+    #In get request
     def get_queryset(self):
         owner = self.request.user
         return Profile.objects.filter(owner__userid=owner.userid)
@@ -49,5 +55,5 @@ class ProfileView(generics.ListCreateAPIView):
 
 class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProfileSerializer
-    permission_class = (IsAuthenticatedAndOwner,)
+    permission_classes = (IsAuthenticated, IsProfileOwner,)
     queryset = Profile.objects.all()

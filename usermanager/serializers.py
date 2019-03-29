@@ -4,15 +4,9 @@ from .models import Profile
 
 User = get_user_model()
 
-class ProfileSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
-    selfie = serializers.ImageField(use_url=True, required=False)
-    class Meta:
-        model = Profile
-        fields = ('owner', 'intro', 'graduated_school', 'selfie')
-
 class UserSerializer(serializers.ModelSerializer):
     profiles = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    applied = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -24,3 +18,17 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class ProfileSerializer(serializers.ModelSerializer):
+    owner = UserSerializer()
+    selfie = serializers.ImageField(use_url=True, required=False)
+    my_apply = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    def to_representation(self, obj):
+        ret = super(ProfileSerializer, self).to_representation(obj)
+        return ret
+
+    class Meta:
+        model = Profile
+        read_only_fields = ('owner', 'my_apply')
+        fields = ('owner', 'intro', 'selfie', 'id', 'my_apply')

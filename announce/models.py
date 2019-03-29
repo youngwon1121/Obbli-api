@@ -9,7 +9,7 @@ class Announce(models.Model):
     writer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='announce', null=True, blank=False)
     pay = models.IntegerField()
     locations = models.CharField(max_length=100)
-    deadline = models.DateTimeField()
+    deadline = models.DateField()
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -21,5 +21,6 @@ class Announce(models.Model):
 class Applying(models.Model):
     announce = models.ForeignKey(Announce, on_delete=models.CASCADE, related_name='applying')
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='my_apply')
+    applier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applied', null=True)
     def __str__(self):
-        return "{0} {1}".format(self.announce, self.profile)
+        return "{0}-{1}".format(self.profile.owner, self.announce.title)

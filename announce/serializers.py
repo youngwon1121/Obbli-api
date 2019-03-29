@@ -11,4 +11,5 @@ class ApplyingSerializer(serializers.ModelSerializer):
     announce = serializers.ReadOnlyField(source='announce.title')
     class Meta:
         model = Applying
-        fields = ('announce', 'profile',)
+        fields = ('announce', 'profile', 'applier', 'id')
+        read_only_fields = ('applier',)

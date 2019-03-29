@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'usermanager.apps.UsermanagerConfig',
     'announce.apps.AnnounceConfig',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'corsheaders' 
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'board_api.urls'
@@ -140,3 +142,7 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = ['usermanager.my_auth.UserBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
+
+#COR options
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = True

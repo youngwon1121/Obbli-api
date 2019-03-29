@@ -43,6 +43,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         max_length=255,
         unique=True,
     )
+    graduated_school = models.CharField(max_length=50, blank=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
@@ -73,7 +74,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='profiles')
     intro = models.TextField()
-    graduated_school = models.CharField(max_length=50)
     selfie = models.ImageField(default="me.jpg", blank=True, null=True)
 
     def __str__(self):

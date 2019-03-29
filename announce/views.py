@@ -6,13 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from usermanager.models import Profile
 from .serializers import AnnounceSerializer, ApplyingSerializer
 from .models import Announce, Applying
-from .permissions import ReadForAnyAndWriteForAuthenticated, IsProfileOwner
+from .permissions import IsProfileOwner, HaveApplied
 
 User = get_user_model()
 
 class AnnounceList(generics.ListCreateAPIView):
     serializer_class = AnnounceSerializer
-    permission_classes = (ReadForAnyAndWriteForAuthenticated,)
     queryset = Announce.objects.all()
 
     def perform_create(self, serializer):
@@ -32,9 +31,9 @@ class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
 class ApplyingAnnounce(generics.CreateAPIView):
     serializer_class = ApplyingSerializer
     queryset = Applying.objects.all()
-    permission_classes = (IsAuthenticated, IsProfileOwner,)
+    permission_classes = (IsAuthenticated, IsProfileOwner, HaveApplied,)
 
     def perform_create(self, serializer):
         #print(self.request.__dict__)
         announce = get_object_or_404(Announce, pk=self.request.parser_context.get('kwargs').get('pk')) 
-        serializer.save(announce=announce)
+        serializer.save(announce=announce, applier=self.request.user)
