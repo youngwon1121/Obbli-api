@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Profile
+from announce.models import Announce, Applying
 
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     profiles = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
-    applied = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -20,10 +20,8 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class ProfileSerializer(serializers.ModelSerializer):
-    owner = UserSerializer()
-    selfie = serializers.ImageField(use_url=True, required=False)
     my_apply = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-
+    selfie = serializers.ImageField(use_url=True, required=False)
     def to_representation(self, obj):
         ret = super(ProfileSerializer, self).to_representation(obj)
         return ret
@@ -32,3 +30,39 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         read_only_fields = ('owner', 'my_apply')
         fields = ('owner', 'intro', 'selfie', 'id', 'my_apply')
+    
+class AnnounceByUserSerializer(serializers.ModelSerializer):
+    announce = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    class Meta:
+        model = User
+        fields = ('announce',)
+
+class ApplyingSerializer(serializers.ModelSerializer):
+    applier = UserSerializer()
+    selfie = serializers.ImageField(source='profile.selfie', use_url=True, read_only=True)
+    intro = serializers.ReadOnlyField(source='profile.intro')
+
+    def to_representation(self, instance):
+        worthless_list = ['profiles', 'last_login', 'is_superuser', 'is_active', 'is_admin', 'groups', 'user_permissions']
+        ret = super(ApplyingSerializer, self).to_representation(instance)
+
+        for worthless in worthless_list:
+            del ret['applier'][worthless]
+        return ret
+
+    class Meta:
+        model = Applying
+        fields = ('applier', 'selfie', 'intro',)
+
+class AnnounceDetailSerializer(serializers.ModelSerializer):
+    applying = ApplyingSerializer(many=True)
+
+    class Meta:
+        model = Announce
+        fields = '__all__'
+
+class AppliedByUserSerializer(serializers.ModelSerializer):
+    applied = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    class Meta:
+        model = User
+        fields = ('applied',)

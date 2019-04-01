@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .serializers import ProfileSerializer, UserSerializer
+from announce.models import Announce
+from .serializers import ProfileSerializer, UserSerializer, AnnounceByUserSerializer, AppliedByUserSerializer, AnnounceDetailSerializer
 from .models import Profile
 from .permissions import IsProfileOwner
 
@@ -36,24 +37,37 @@ class JoinView(generics.CreateAPIView):
 class MyPageView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
-
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
 
-class ProfileView(generics.ListCreateAPIView):
+class MyAnnounce(generics.ListAPIView):
+    serializer_class = AnnounceByUserSerializer
+    permission_classes = (IsAuthenticated,)
+    def get_queryset(self):
+        return User.objects.filter(id=self.request.user.id)
+
+class MyAnnounceDetail(generics.RetrieveAPIView):
+    serializer_class = AnnounceDetailSerializer
+    def get_queryset(self):
+        return Announce.objects.all()
+
+class MyProfile(generics.ListCreateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
-
-    #In get request
     def get_queryset(self):
         owner = self.request.user
         return Profile.objects.filter(owner__userid=owner.userid)
-
-    #perform_create is used to save serializer in post request
+    
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
+class MyProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsProfileOwner,)
     queryset = Profile.objects.all()
+
+class MyApplied(generics.ListAPIView):
+    serializer_class = AppliedByUserSerializer
+    permission_classes = (IsAuthenticated,)
+    def get_queryset(self):
+        return User.objects.filter(id=self.request.user.id)
