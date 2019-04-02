@@ -30,12 +30,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         read_only_fields = ('owner', 'my_apply')
         fields = ('owner', 'intro', 'selfie', 'id', 'my_apply')
-    
-class AnnounceByUserSerializer(serializers.ModelSerializer):
-    announce = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+class MyAnnounceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('announce',)
+        model = Announce
+        fields = '__all__'
 
 class ApplyingSerializer(serializers.ModelSerializer):
     applier = UserSerializer()
@@ -56,13 +55,13 @@ class ApplyingSerializer(serializers.ModelSerializer):
 
 class AnnounceDetailSerializer(serializers.ModelSerializer):
     applying = ApplyingSerializer(many=True)
-
     class Meta:
         model = Announce
         fields = '__all__'
 
-class AppliedByUserSerializer(serializers.ModelSerializer):
-    applied = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+class MyAppliedSerializer(serializers.ModelSerializer):
+    announce_title = serializers.ReadOnlyField(source='announce.title')
+    announce_deadline = serializers.ReadOnlyField(source='announce.deadline')
     class Meta:
-        model = User
-        fields = ('applied',)
+        model = Applying
+        fields = '__all__'

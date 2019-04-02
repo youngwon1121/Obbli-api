@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from usermanager.models import Profile
 from .serializers import AnnounceSerializer, ApplyingSerializer
 from .models import Announce, Applying
@@ -20,14 +21,7 @@ class AnnounceList(generics.ListCreateAPIView):
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer
     queryset = Announce.objects.all()
-
-'''
-    announce : pk에서 얻음
-    profile : json으로 전송 후 검증
-
-    같은 Apply에 같은프로필로 중복지원 불가능
-    프로필 json으로 받을때 해당 유저의 프로필 맞는지 permission확인
-'''
+    
 class ApplyingAnnounce(generics.CreateAPIView):
     serializer_class = ApplyingSerializer
     queryset = Applying.objects.all()

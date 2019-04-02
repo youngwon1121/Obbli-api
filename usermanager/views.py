@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from announce.models import Announce
-from .serializers import ProfileSerializer, UserSerializer, AnnounceByUserSerializer, AppliedByUserSerializer, AnnounceDetailSerializer
+from announce.models import Announce, Applying
+from .serializers import ProfileSerializer, UserSerializer,  AnnounceDetailSerializer, MyAnnounceSerializer, MyAppliedSerializer
 from .models import Profile
 from .permissions import IsProfileOwner
 
@@ -34,26 +34,43 @@ class JoinView(generics.CreateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
-class MyPageView(generics.ListAPIView):
+class MyPageView(generics.RetrieveAPIView):
+    '''
+    View for /user/me/
+    '''
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
-    def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+
+    def get_object(self):
+        obj = User.objects.get(id=self.request.user.id)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 class MyAnnounce(generics.ListAPIView):
-    serializer_class = AnnounceByUserSerializer
+    '''
+    View for /user/me/announce/
+    '''
+    serializer_class = MyAnnounceSerializer
     permission_classes = (IsAuthenticated,)
+
     def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+        return Announce.objects.filter(writer=self.request.user)
 
 class MyAnnounceDetail(generics.RetrieveAPIView):
+    '''
+    View for /user/me/announce/<pk>/
+    '''
     serializer_class = AnnounceDetailSerializer
     def get_queryset(self):
         return Announce.objects.all()
 
 class MyProfile(generics.ListCreateAPIView):
+    '''
+    View for /user/me/profile/
+    '''
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = None
     def get_queryset(self):
         owner = self.request.user
         return Profile.objects.filter(owner__userid=owner.userid)
@@ -62,12 +79,19 @@ class MyProfile(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 class MyProfileDetail(generics.RetrieveUpdateDestroyAPIView):
+    '''
+    View for /user/me/profile/<pk>/
+    '''
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsProfileOwner,)
     queryset = Profile.objects.all()
 
 class MyApplied(generics.ListAPIView):
-    serializer_class = AppliedByUserSerializer
+    '''
+    View for /user/me/applying/
+    '''
+    serializer_class = MyAppliedSerializer
     permission_classes = (IsAuthenticated,)
+
     def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+        return Applying.objects.filter(applier=self.request.user)
