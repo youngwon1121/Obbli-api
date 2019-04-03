@@ -18,7 +18,9 @@ class LogInView(APIView):
         password = request.data.get('password')
 
         if userid is None or password is None:
-            return Response({'error' : 'Didn\'t get either userid or password'})
+            return Response({'error' : 'Didn\'t get either userid or password'},
+                status=status.HTTP_400_BAD_REQUEST    
+            )
 
         user = authenticate(userid=userid, password=password)
         if not user:

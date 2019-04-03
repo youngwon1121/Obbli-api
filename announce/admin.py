@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Announce, Applying
 
-# Register your models here.
+admin.site.register(Announce)
+admin.site.register(Applying)

@@ -4,6 +4,13 @@ from usermanager.models import Profile
 
 User = get_user_model()
 class Announce(models.Model):
+    INSTRUMENTAL_TYPES = (
+        ('Wind', '관악기'),
+        ('String', '현악기'),
+        ('Percussion', '타악기'),
+        ('Keyboard', '건반악기'),
+        ('Vocal', '성악')
+    )
     title = models.CharField(max_length=30)
     body = models.TextField()
     writer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='announce', null=True, blank=False)
@@ -11,7 +18,7 @@ class Announce(models.Model):
     locations = models.CharField(max_length=100)
     deadline = models.DateField()
     upload_date = models.DateTimeField(auto_now_add=True)
-
+    instrumental_type = models.CharField(max_length=10, choices=INSTRUMENTAL_TYPES)
     def __str__(self):
         return self.title
 
