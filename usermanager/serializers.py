@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import serializers
-from .models import Profile
+from .models import Profile, ResetPW
 from announce.models import Announce, Applying
+from PIL import Image
+from io import BytesIO
 
 User = get_user_model()
 
@@ -22,8 +25,36 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     my_apply = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     selfie = serializers.ImageField(use_url=True, required=False)
+    #fixed_selfie = serializers.SerializerMethodField()
+
     def to_representation(self, obj):
         ret = super(ProfileSerializer, self).to_representation(obj)
+        return ret
+
+    def to_internal_value(self, data):
+        ret = super(ProfileSerializer, self).to_internal_value(data)
+        '''
+        ret['selfie'] : InMemoryUploadedFile
+        ret['selfie'].name
+        ret['selfie'].content_type
+        ret['selfie'].file : BytesIO
+        '''        
+
+        if 'selfie' in ret:
+            io = BytesIO()
+
+            selfie = ret['selfie'].file
+            im = Image.open(selfie)
+            im = im.resize((200, 200))
+            im.save(io, ret['selfie'].content_type.split('/')[-1].upper())
+
+            ret['selfie'] = InMemoryUploadedFile(
+                io,
+                'photo',
+                ret['selfie'].name,
+                ret['selfie'].content_type,
+                None,None
+            )
         return ret
 
     class Meta:
@@ -65,3 +96,10 @@ class MyAppliedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Applying
         fields = '__all__'
+
+class ResetPWSerializer(serializers.ModelSerializer):
+    hash_key = serializers.CharField(write_only=True, required=False)
+    class Meta:
+        model = ResetPW
+        fields = ('email', 'created_at', 'hash_key')
+        read_only_fields = ('verified','created_at')

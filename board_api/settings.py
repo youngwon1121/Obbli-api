@@ -148,3 +148,12 @@ AUTHENTICATION_BACKENDS = ['usermanager.my_auth.UserBackend',
 #COR options
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
+
+#Mail Options
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'tls0dnjs@gmail.com'
+EMAIL_HOST_PASSWORD = 'tls0dnjssla'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

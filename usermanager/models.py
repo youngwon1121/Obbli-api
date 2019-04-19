@@ -6,7 +6,6 @@ class MyUserManager(BaseUserManager):
     def create_user(self, userid, username, phone, date_of_birth, email, password=None):
         if not userid:
             raise ValueError('User must have an userid')
-        
 
         user = self.model(
             userid = userid,
@@ -73,7 +72,17 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='profiles')
     intro = models.TextField()
+    awards = models.TextField(blank=True)
     selfie = models.ImageField(default="me.jpg", blank=True, null=True)
 
     def __str__(self):
         return self.intro
+
+class ResetPW(models.Model):
+    email = models.EmailField(max_length=255)
+    hash_key = models.CharField(max_length=200)
+    verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "{0} - {1}".format(self.email, self.created_at)

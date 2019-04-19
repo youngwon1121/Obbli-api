@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import force_authenticate
@@ -29,7 +30,7 @@ class TestSupport:
         token = Token.objects.get_or_create(user=user)
         return user, token
 
-
+'''
 class LoginViewTest(APITestCase):
     url = '/user/login/'
     def setUp(self):
@@ -54,6 +55,20 @@ class LoginViewTest(APITestCase):
             "password" : "tls0dnjs"
         })
         self.assertEqual(400, res.status_code)
+'''
+class ResetPWEmailTest(APITestCase):
+    url = reverse('reset-mail')
+
+    def setUp(self):
+        TestSupport.create_token()
+    
+    def test_send_mail(self):
+        res = self.client.post(self.url, {
+            "email" : "peter9932@naver.com",
+            "verified" : True
+        })
+        print(res.data)
+        self.assertEqual(201, res.status_code)
 
 class MyPageTest(APITestCase):
     url = '/user/me/'
@@ -98,18 +113,26 @@ class MyProfileTest(APITestCase):
 
     def test_post_myprofile(self):
         token = Token.objects.get(user__userid='testest')
+        test_image = SimpleUploadedFile(
+            name='3.png',
+            content=open('/Users/youngwon/Desktop/2.png', 'rb').read(),
+            content_type="image/png"
+        )   
         self.client.credentials(HTTP_AUTHORIZATION='Token '+token.key)
+
         res = self.client.post(self.url, {
-            "intro" : "hihi"
+            "intro" : "hihi",
+            "selfie" : test_image
         })
         self.assertEqual(HTTP_201_CREATED, res.status_code)
 
+'''
     def test_post_myprofile_without_data(self):
         token = Token.objects.get(user__userid='testest')
         self.client.credentials(HTTP_AUTHORIZATION='Token '+token.key)
         res = self.client.post(self.url)
         self.assertEqual(HTTP_400_BAD_REQUEST, res.status_code)
-
+'''
 class MyProfileDetailTest(APITestCase):
     def url(self, pk):
         return reverse('my-profile-detail', kwargs={"pk": pk})
