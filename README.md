@@ -10,7 +10,8 @@ API written in DRF, python
 /user/reset_password/send_mail/
 	POST : 해시값 생성 후, 이메일로 전송	
 	@param email
-		email 파라미터 : 400
+		성공 : 201
+		body체크 : 400
 		user중에 해당 email을 가진유저 없을 떄 : 404
 		이메일 발송 실패시 : 500
 
@@ -30,8 +31,7 @@ API written in DRF, python
 	@param password
 
 	email or hash_key없을때 : 400
-	email에 맞는값없을때 : 404
-	hash또는 인증이 안됨 : 401
+	파라미터들에 맞는 모델인스턴스가 없을 떄 : 401
 	성공 : 200
 
 /user/me/  

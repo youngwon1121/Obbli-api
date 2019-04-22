@@ -102,4 +102,4 @@ class ResetPWSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResetPW
         fields = ('email', 'created_at', 'hash_key')
-        read_only_fields = ('verified','created_at')
+        read_only_fields = ('verified', 'created_at')

@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'announce.apps.AnnounceConfig',
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders' 
+    'corsheaders',
+    'debug_toolbar'
 ]
 
 MIDDLEWARE = [
@@ -52,7 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+    'corsheaders.middleware.CorsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
 ROOT_URLCONF = 'board_api.urls'
@@ -157,3 +159,6 @@ EMAIL_HOST_PASSWORD = 'tls0dnjssla'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+#debug toolbar options
+INTERNAL_IPS = ('127.0.0.1',)

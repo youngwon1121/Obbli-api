@@ -30,45 +30,54 @@ class TestSupport:
         token = Token.objects.get_or_create(user=user)
         return user, token
 
-'''
+
 class LoginViewTest(APITestCase):
-    url = '/user/login/'
+    url = reverse('login')
     def setUp(self):
         TestSupport.create_account()
 
-    def test_authentication_with_valid_data(self):
+    def test_auth_with_valid_data(self):
         res = self.client.post(self.url, {
             "userid" : "testest",
             "password" : "pwtest"
         })
         self.assertEqual(201, res.status_code)
 
-    def test_authentication_without_pw(self):
+    def test_auth_without_pw(self):
         res = self.client.post(self.url, {
             "userid" : "testest"
         })
         self.assertEqual(400, res.status_code)
 
-    def test_authentication_with_wrong_pw(self):
+    def test_auth_with_wrong_pw(self):
         res = self.client.post(self.url, {
             "userid" : "testest",
             "password" : "tls0dnjs"
         })
-        self.assertEqual(400, res.status_code)
-'''
-class ResetPWEmailTest(APITestCase):
-    url = reverse('reset-mail')
+        self.assertEqual(401, res.status_code)
+
+class SendMail(APITestCase):
+    url = reverse('send-mail')
 
     def setUp(self):
         TestSupport.create_token()
     
     def test_send_mail(self):
         res = self.client.post(self.url, {
-            "email" : "peter9932@naver.com",
-            "verified" : True
+            "email" : "testest@naver.com"
         })
         print(res.data)
         self.assertEqual(201, res.status_code)
+
+    def test_send_mail_without_email(self):
+        res = self.client.post(self.url, {})
+        self.assertEqual(400, res.status_code)
+
+    def test_send_with_not_exist_email(self):
+        res = self.client.post(self.url, {
+            "email" : "asdf@naver.com"
+        })
+        self.assertEqual(404, res.status_code)
 
 class MyPageTest(APITestCase):
     url = '/user/me/'

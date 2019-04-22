@@ -31,8 +31,9 @@ class LogInView(APIView):
         user = authenticate(userid=userid, password=password)
         if not user:
             return Response({'error' : 'Wrong userid or password'},
-                status=status.HTTP_400_BAD_REQUEST
-            )    
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         token, _ = Token.objects.get_or_create(user=user)
         return Response({'token' : token.key},
             status=status.HTTP_201_CREATED
@@ -46,21 +47,23 @@ class ResetPassword(generics.UpdateAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):
-        #email또는 hash_key없을시
-        if 'email' not in self.request.data or 'hash_key' not in self.request.data:
+        email = self.request.data.get('email')
+        hash_key = self.request.data.get('hash_key')
+
+        if email is None or hash_key is None:
             raise exceptions.ParseError('Empty email or empty hash_key')
-            
+        
         try : 
-            obj = ResetPW.objects.filter(email=self.request.data['email']).order_by('-created_at')[0]
-        except IndexError:
-            raise exceptions.NotFound('Invalid Email')
-
-        #해당 인스턴스 hash_key비교하고 verified확인
-        if obj.hash_key != self.request.data['hash_key'] or not obj.verified:
-            raise exceptions.AuthenticationFailed('Not verified or wrong hash_key')
-
-        return User.objects.get(email = self.request.data['email'])
-
+            sub = ResetPW.objects.filter(
+                email=email, 
+                verified=1, 
+                hash_key=hash_key).values('email')[0:1]
+            obj = User.objects.get(email=Subquery(sub))
+        except User.DoesNotExist as e:
+            raise exceptions.AuthenticationFailed()
+        
+        return obj
+    
     def get_serializer(self, *args, **kwargs):
         if 'password' in kwargs['data']:
             kwargs['data']['password'] = make_password(kwargs['data']['password'])
@@ -86,17 +89,20 @@ class SendMailForPassword(generics.CreateAPIView, generics.UpdateAPIView):
             raise exceptions.APIException()
 
     def put(self, request, *args, **kwargs):
-        if not ('email' in request.data and 'hash_key' in request.data):
+        hash_key = request.data.get('hash_key')
+        email = request.data.get('email')
+
+        if hash_key is None or email is None:
             raise exceptions.ParseError('empty either email or hash_key')
 
         sub = ResetPW.objects.filter(
-            email=request.data['email'],
+            email=email,
             created_at__gte=timezone.localtime()+timedelta(minutes=-3)
         ).order_by('-created_at')
         updated_row = ResetPW.objects.filter(pk=Subquery(sub.values('id')[0:1])).update(
                 verified = Case(
                     When(
-                        hash_key = request.data['hash_key'],
+                        hash_key = hash_key,
                         then = Value(True)
                     ),
                 default = Value(False),
@@ -113,9 +119,6 @@ class SendMailForPassword(generics.CreateAPIView, generics.UpdateAPIView):
         return Response({"detail":"success"})
         
 class MyPageView(generics.RetrieveAPIView):
-    '''
-    View for /user/me/
-    '''
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -125,27 +128,18 @@ class MyPageView(generics.RetrieveAPIView):
         return obj
 
 class MyAnnounce(generics.ListAPIView):
-    '''
-    View for /user/me/announce/
-    '''
     serializer_class = MyAnnounceSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Announce.objects.filter(writer=self.request.user)
+        return Announce.objects.filter(writer=self.request.user).order_by('-created_at')
 
 class MyAnnounceDetail(generics.RetrieveAPIView):
-    '''
-    View for /user/me/announce/<pk>/
-    '''
     serializer_class = AnnounceDetailSerializer
     def get_queryset(self):
         return Announce.objects.all()
 
 class MyProfile(generics.ListCreateAPIView):
-    '''
-    View for /user/me/profile/
-    '''
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = None
@@ -158,19 +152,13 @@ class MyProfile(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 class MyProfileDetail(generics.RetrieveUpdateDestroyAPIView):
-    '''
-    View for /user/me/profile/<pk>/
-    '''
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsProfileOwner,)
     queryset = Profile.objects.all()
 
 class MyApplied(generics.ListAPIView):
-    '''
-    View for /user/me/applying/
-    '''
     serializer_class = MyAppliedSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Applying.objects.filter(applier=self.request.user)
+        return Applying.objects.filter(applier=self.request.user).order_by('-created_at')
