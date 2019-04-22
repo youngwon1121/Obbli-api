@@ -1,19 +1,22 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.shortcuts import Http404
 from rest_framework import generics
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from usermanager.models import Profile
-from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer
+from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
 from .models import Announce, Applying, Comment
 from .permissions import IsProfileOwner, HaveApplied
 
 User = get_user_model()
 
 class AnnounceList(generics.ListCreateAPIView):
-    serializer_class = AnnounceSerializer
-    queryset = Announce.objects.all()
+    serializer_class = AnnounceSerializerForList
+
+    def get_queryset(self):
+        return Announce.objects.select_related('writer')
 
     def perform_create(self, serializer):
         serializer.save(writer=self.request.user)
@@ -21,6 +24,17 @@ class AnnounceList(generics.ListCreateAPIView):
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer
     queryset = Announce.objects.all()
+
+    def get_object(self):
+        try:
+            obj = Announce.objects.select_related('writer')\
+                .prefetch_related('comments__replies', 'comments__writer', 'comments__replies__writer')\
+                .get(pk=self.kwargs['pk'])
+            self.check_object_permissions(self.request, obj)
+            return obj
+
+        except Announce.DoesNotExist:
+            raise Http404
 
 class CommentView(generics.CreateAPIView):
     serializer_class = CommentSerializer

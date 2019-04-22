@@ -9,10 +9,18 @@ class SubCommentSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source='writer.username')
-    replies = SubCommentSerializer(many=True)
+    replies = SubCommentSerializer(many=True, read_only=True)
     class Meta:
         model = Comment
         read_only_fields = ('announce', 'parent')
+        fields = '__all__'
+
+class AnnounceSerializerForList(serializers.ModelSerializer):
+    writer = serializers.ReadOnlyField(source='writer.username')
+    instrumental_type = serializers.CharField(source='get_instrumental_type_display')
+
+    class Meta:
+        model = Announce
         fields = '__all__'
 
 class AnnounceSerializer(serializers.ModelSerializer):
