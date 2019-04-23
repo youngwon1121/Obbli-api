@@ -16,7 +16,10 @@ class AnnounceList(generics.ListCreateAPIView):
     serializer_class = AnnounceSerializerForList
 
     def get_queryset(self):
-        return Announce.objects.select_related('writer')
+        if self.request.query_params.get('type') in dict(Announce.INSTRUMENTAL_TYPES):
+            return Announce.objects.filter(instrumental_type=self.request.query_params['type'])\
+                .select_related('writer').order_by('-created_at')
+        return Announce.objects.select_related('writer').order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(writer=self.request.user)
