@@ -1,14 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.shortcuts import Http404
-from rest_framework import generics
+from rest_framework import generics, exceptions
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from usermanager.models import Profile
 from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
 from .models import Announce, Applying, Comment
-from .permissions import IsProfileOwner, HaveApplied
+from .permissions import HaveApplied, IsAnnounceOwner, IsCommentOwner
 
 User = get_user_model()
 
@@ -27,13 +27,15 @@ class AnnounceList(generics.ListCreateAPIView):
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer
     queryset = Announce.objects.all()
+    permission_classes = (IsAnnounceOwner,)
 
     def get_object(self):
         try:
             obj = Announce.objects.select_related('writer')\
                 .prefetch_related('comments__replies', 'comments__writer', 'comments__replies__writer')\
                 .get(pk=self.kwargs['pk'])
-            self.check_object_permissions(self.request, obj)
+            if self.request.method in ['PUT', 'DELETE']:
+                self.check_object_permissions(self.request, obj) 
             return obj
 
         except Announce.DoesNotExist:
@@ -57,12 +59,18 @@ class CommentView(generics.CreateAPIView):
 class CommentDetail(generics.UpdateAPIView, generics.DestroyAPIView):
     serializer_class = CommentSerializer
     queryset = Comment.objects.all()
+    permission_classes = (IsCommentOwner,)
     
 class ApplyingAnnounce(generics.CreateAPIView):
     serializer_class = ApplyingSerializer
     queryset = Applying.objects.all()
-    permission_classes = (IsAuthenticated, IsProfileOwner, HaveApplied,)
+    permission_classes = (IsAuthenticated, HaveApplied,)
 
     def perform_create(self, serializer):
-        announce = get_object_or_404(Announce, pk=self.request.parser_context.get('kwargs').get('pk')) 
+        #profile owner check
+        profile = Profile.objects.select_related('owner').get(pk=self.request.data.get('profile'))
+        if profile.owner != self.request.user:
+            raise exceptions.ParseError()
+
+        announce = get_object_or_404(Announce, pk=self.request.parser_context.get('kwargs').get('pk'))
         serializer.save(announce=announce, applier=self.request.user)

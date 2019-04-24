@@ -136,8 +136,13 @@ class MyAnnounce(generics.ListAPIView):
 
 class MyAnnounceDetail(generics.RetrieveAPIView):
     serializer_class = AnnounceDetailSerializer
-    def get_queryset(self):
-        return Announce.objects.all()
+
+    def get_object(self):
+        try : 
+            obj = Announce.objects.prefetch_related('applying__applier', 'applying__profile').get(pk=self.kwargs['pk'])
+            return obj
+        except Announce.DoesNotExist:
+            raise exceptions.NotFound('Not exist page')
 
 class MyProfile(generics.ListCreateAPIView):
     serializer_class = ProfileSerializer
@@ -146,7 +151,7 @@ class MyProfile(generics.ListCreateAPIView):
 
     def get_queryset(self):
         owner = self.request.user
-        return Profile.objects.filter(owner__userid=owner.userid)
+        return Profile.objects.prefetch_related('my_apply').filter(owner__userid=owner.userid)
     
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -161,4 +166,5 @@ class MyApplied(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Applying.objects.filter(applier=self.request.user).order_by('-created_at')
+        return Applying.objects.filter(applier=self.request.user)\
+            .select_related('profile', 'announce').order_by('-created_at')

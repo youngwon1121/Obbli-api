@@ -9,13 +9,17 @@ from io import BytesIO
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
-    profiles = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
+    profiles = serializers.HyperlinkedRelatedField(
+        many=True,
+        view_name='my-profile-detail',
+        read_only=True
+    )
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = '__all__'
-    
+        fields = ('id', 'userid', 'username', 'phone', 'date_of_birth', 'email', 'graduated_school', 'profiles', 'password')
+
     def create(self, validated_data):
         user = super(UserSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
@@ -23,23 +27,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class ProfileSerializer(serializers.ModelSerializer):
-    my_apply = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     selfie = serializers.ImageField(use_url=True, required=False)
     #fixed_selfie = serializers.SerializerMethodField()
 
-    def to_representation(self, obj):
-        ret = super(ProfileSerializer, self).to_representation(obj)
-        return ret
-
     def to_internal_value(self, data):
-        ret = super(ProfileSerializer, self).to_internal_value(data)
         '''
         ret['selfie'] : InMemoryUploadedFile
         ret['selfie'].name
         ret['selfie'].content_type
         ret['selfie'].file : BytesIO
         '''        
-
+        ret = super(ProfileSerializer, self).to_internal_value(data)
         if 'selfie' in ret:
             io = BytesIO()
 
@@ -53,32 +51,29 @@ class ProfileSerializer(serializers.ModelSerializer):
                 'photo',
                 ret['selfie'].name,
                 ret['selfie'].content_type,
-                None,None
+                None, None
             )
         return ret
 
     class Meta:
         model = Profile
-        read_only_fields = ('owner', 'my_apply')
-        fields = ('owner', 'intro', 'selfie', 'id', 'my_apply')
+        read_only_fields = ('owner', )
+        fields = ('owner', 'intro', 'selfie', 'id', )
 
 class MyAnnounceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announce
         fields = '__all__'
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'phone', 'date_of_birth', 'email', 'graduated_school',)
+
 class ApplyingSerializer(serializers.ModelSerializer):
-    applier = UserSerializer()
+    applier = SimpleUserSerializer()
     selfie = serializers.ImageField(source='profile.selfie', use_url=True, read_only=True)
     intro = serializers.ReadOnlyField(source='profile.intro')
-
-    def to_representation(self, instance):
-        worthless_list = ['profiles', 'last_login', 'is_superuser', 'is_active', 'is_admin', 'groups', 'user_permissions']
-        ret = super(ApplyingSerializer, self).to_representation(instance)
-
-        for worthless in worthless_list:
-            del ret['applier'][worthless]
-        return ret
 
     class Meta:
         model = Applying
@@ -91,11 +86,16 @@ class AnnounceDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MyAppliedSerializer(serializers.ModelSerializer):
+    announce = serializers.HyperlinkedRelatedField(
+        many=False,
+        read_only=True,
+        view_name='announce:announce-detail'
+    )
     announce_title = serializers.ReadOnlyField(source='announce.title')
     announce_deadline = serializers.ReadOnlyField(source='announce.deadline')
     class Meta:
         model = Applying
-        fields = '__all__'
+        fields = ('id', 'announce', 'announce_title', 'announce_deadline', 'created_at', 'profile')
 
 class ResetPWSerializer(serializers.ModelSerializer):
     hash_key = serializers.CharField(write_only=True, required=False)
