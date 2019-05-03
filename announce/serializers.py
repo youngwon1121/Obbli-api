@@ -12,16 +12,19 @@ class CommentSerializer(serializers.ModelSerializer):
     replies = SubCommentSerializer(many=True, read_only=True)
     class Meta:
         model = Comment
-        read_only_fields = ('announce', 'parent')
+        read_only_fields = ('announce',)
         fields = '__all__'
 
 class AnnounceSerializerForList(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source='writer.username')
     instrumental_type = serializers.CharField(source='get_instrumental_type_display')
+    url = serializers.HyperlinkedIdentityField(
+        view_name = 'announce:announce-detail'
+    )
 
     class Meta:
         model = Announce
-        fields = '__all__'
+        fields = ('id', 'url', 'title', 'writer', 'instrumental_type', 'deadline', 'pay')
 
 class AnnounceSerializer(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source='writer.username')
@@ -30,15 +33,12 @@ class AnnounceSerializer(serializers.ModelSerializer):
 
     def to_representation(self, obj):
         ret = super(AnnounceSerializer, self).to_representation(obj)
-        for idx, comment in enumerate(ret['comments']):
-            if comment['parent'] is not None:
-                del ret['comments'][idx]
-
+        ret['comments'] = [comment for comment in ret['comments'] if comment['parent'] is None]
         return ret
-
+        
     class Meta:
         model = Announce
-        fields = '__all__'
+        fields = ('id', 'writer', 'instrumental_type', 'title', 'content', 'pay', 'locations', 'deadline', 'comments')
 
 class ApplyingSerializer(serializers.ModelSerializer):
     announce = serializers.ReadOnlyField(source='announce.title')

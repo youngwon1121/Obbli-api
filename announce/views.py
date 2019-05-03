@@ -2,9 +2,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.shortcuts import Http404
 from rest_framework import generics, exceptions
-from rest_framework.response import Response 
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from usermanager.models import Profile
 from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
 from .models import Announce, Applying, Comment
@@ -19,6 +17,7 @@ class AnnounceList(generics.ListCreateAPIView):
         if self.request.query_params.get('type') in dict(Announce.INSTRUMENTAL_TYPES):
             return Announce.objects.filter(instrumental_type=self.request.query_params['type'])\
                 .select_related('writer').order_by('-created_at')
+                
         return Announce.objects.select_related('writer').order_by('-created_at')
 
     def perform_create(self, serializer):
@@ -35,7 +34,7 @@ class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
                 .prefetch_related('comments__replies', 'comments__writer', 'comments__replies__writer')\
                 .get(pk=self.kwargs['pk'])
             if self.request.method in ['PUT', 'DELETE']:
-                self.check_object_permissions(self.request, obj) 
+                self.check_object_permissions(self.request, obj)
             return obj
 
         except Announce.DoesNotExist:
@@ -64,7 +63,7 @@ class CommentDetail(generics.UpdateAPIView, generics.DestroyAPIView):
 class ApplyingAnnounce(generics.CreateAPIView):
     serializer_class = ApplyingSerializer
     queryset = Applying.objects.all()
-    permission_classes = (IsAuthenticated, HaveApplied,)
+    permission_classes = (HaveApplied,)
 
     def perform_create(self, serializer):
         #profile owner check

@@ -151,7 +151,8 @@ REST_FRAMEWORK = {
     ],
 }
 
-AUTHENTICATION_BACKENDS = ['usermanager.my_auth.UserBackend',
+AUTHENTICATION_BACKENDS = [
+    'usermanager.my_auth.UserBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
 

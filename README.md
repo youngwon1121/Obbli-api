@@ -75,8 +75,8 @@ API written in DRF, python
 
 /announce/  
 
-	GET : 구인목록(전체 보기 가능)
-	POST : 구인글쓰기
+	GET : 구인목록 (전체 보기 가능)
+	POST : 구인글쓰기 (로그인 한 유저만 가능)
 
 /announce/\<pk\>/  
 
