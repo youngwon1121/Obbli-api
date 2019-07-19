@@ -17,7 +17,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class AnnounceSerializerForList(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source='writer.username')
-    instrumental_type = serializers.CharField(source='get_instrumental_type_display')
+    #instrumental_type = serializers.CharField(source='get_instrumental_type_display')
     url = serializers.HyperlinkedIdentityField(
         view_name = 'announce:announce-detail'
     )
