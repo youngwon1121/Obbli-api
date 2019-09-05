@@ -6,7 +6,8 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import EmailMessage
 from django.db.models import Case, When, Subquery, Value, BooleanField
-from rest_framework import status, generics, exceptions
+from rest_framework import viewsets, mixins, status, generics, exceptions
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -18,30 +19,24 @@ from .permissions import IsProfileOwner
 
 User = get_user_model()
 
-class LogInView(APIView):
-    def post(self, request, *args, **kwargs):
-        userid = request.data.get('userid')
-        password = request.data.get('password')
+class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    serializer_class = UserSerializer
 
-        if userid is None or password is None:
-            return Response({'error' : 'Didn\'t get either userid or password'},
-                status=status.HTTP_400_BAD_REQUEST    
-            )
-
-        user = authenticate(userid=userid, password=password)
+    @action(detail=False, methods=['POST'])
+    def login(self, request, *args, **kwargs):
+        serializer = UserSerializer(data=request.data, fields=('userid', 'password'))
+        serializer.is_valid(raise_exception=True)
+        
+        user = authenticate(userid=serializer.validated_data['userid'], password=serializer.validated_data['password'])
         if not user:
             return Response({'error' : 'Wrong userid or password'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
+
         token, _ = Token.objects.get_or_create(user=user)
         return Response({'token' : token.key},
             status=status.HTTP_201_CREATED
         )
-
-class JoinView(generics.CreateAPIView):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
 
 class ResetPassword(generics.UpdateAPIView):
     serializer_class = UserSerializer

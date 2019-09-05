@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 from .models import Profile, ResetPW
 from announce.models import Announce, Applying
 from PIL import Image
@@ -8,7 +9,22 @@ from io import BytesIO
 
 User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
+class DynamicFieldsModelSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        '''
+            fields : 사용하고자하는 필드
+        '''
+        fields = kwargs.pop('fields', None)
+        
+        super(DynamicFieldsModelSerializer, self).__init__(*args, **kwargs)
+        
+        if fields is not None:
+            fields = set(self.fields) - set(fields)
+
+            for field_name in fields:
+                self.fields.pop(field_name)
+
+class UserSerializer(DynamicFieldsModelSerializer):
     profiles = serializers.HyperlinkedRelatedField(
         many=True,
         view_name='my-profile-detail',
@@ -103,3 +119,9 @@ class ResetPWSerializer(serializers.ModelSerializer):
         model = ResetPW
         fields = ('email', 'created_at', 'hash_key')
         read_only_fields = ('verified', 'created_at')
+
+class TokenSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Token
+        fields = '__all__'
