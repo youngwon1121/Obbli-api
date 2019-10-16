@@ -38,6 +38,59 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
             status=status.HTTP_201_CREATED
         )
 
+class ResetPasswordViewSet(viewsets.GenericViewSet):
+    serializer_class = ResetPWSerializer
+
+    @action(detail=False, methods=['POST'])
+    def token_create(self, request, *args, **kwargs):
+        email = request.user.email
+        hash_key = hashlib.sha256((str(timezone.localtime().time())+request.user.email).encode()).hexdigest()
+        serializer_data = {
+            'email' : email,
+            'hash_key' : hash_key
+        }
+        serializer = self.get_serializer(data = serializer_data)
+        serializer.is_valid(raise_exception=True)
+        serializer = serializer.save()
+
+        email_result = EmailMessage('비밀번호 변경', serializer.hash_key, to=[serializer.email]).send()
+        if email_result != 1:
+            raise exceptions.APIException()
+
+    @action(detail=False, methods=['PUT'])
+    def token_update(self, request, *args, **kwargs):
+        hash_key = request.data.get('hash_key')
+        email = request.user.email
+
+        if hash_key is  None:
+            raise exceptions.ParseError('Empty email or empty hash_key')
+
+        sub = ResetPW.objects.filter(
+            email = email,
+            hash_key = hash_key,
+            created_at__gte=timezone.localtime()+timedelta(minutes=-3)
+        ).order_by('-created_at').values('pk')[0:1]
+
+        affected_row = ResetPW.objects.filter(pk = Subquery(sub)).update(
+                verified = Case(
+                    When(
+                        hash_key = hash_key,
+                        then = Value(True)
+                    ),
+                default = Value(False),
+                output_field = BooleanField()
+            )
+        )
+
+        if affected_row == 0:
+            raise exceptions.NotFound('인증 요청시간이 지났거나 요청한 적이 없습니다.')
+
+        return Response({"detail":"success"})
+   
+    #def change_password(self, request, *args, **kwargs):
+
+
+#비밀번호 바꾸는 부분
 class ResetPassword(generics.UpdateAPIView):
     serializer_class = UserSerializer
 
@@ -107,9 +160,6 @@ class SendMailForPassword(generics.CreateAPIView, generics.UpdateAPIView):
 
         if updated_row == 0:
             raise exceptions.NotFound('인증 요청시간이 지났거나 요청한 적이 없습니다.')
-
-        if sub.values('verified')[0]['verified'] is False:
-            raise exceptions.PermissionDenied('Wrong hash_key')
 
         return Response({"detail":"success"})
         
