@@ -1,1 +1,4 @@
 **/__pycache__/
+activate.bat
+deactivate.bat
+personalEnv/
