@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import Http404
 from rest_framework import generics, exceptions
 from rest_framework.response import Response
-from usermanager.models import Profile
+from resume.models import Resume
 from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
 from .models import Announce, Applying, Comment
 from .permissions import HaveApplied, IsAnnounceOwner, IsCommentOwner
@@ -68,7 +68,7 @@ class ApplyingAnnounce(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         #profile owner check
-        profile = Profile.objects.select_related('owner').get(pk=self.request.data.get('profile'))
+        profile = Resume.objects.select_related('owner').get(pk=self.request.data.get('profile'))
         if profile.owner != self.request.user:
             raise exceptions.ParseError()
 

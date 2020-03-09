@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from announce.models import Announce, Applying
-from .serializers import ProfileSerializer, UserSerializer,  AnnounceDetailSerializer, MyAnnounceSerializer, MyAppliedSerializer, ResetPWSerializer
-from .models import Profile, ResetPW
+from .serializers import UserSerializer,  AnnounceDetailSerializer, MyAnnounceSerializer, MyAppliedSerializer, ResetPWSerializer
+from .models import ResetPW
 from .permissions import IsProfileOwner
 
 User = get_user_model()
@@ -135,23 +135,6 @@ class MyAnnounceDetail(generics.RetrieveAPIView):
             return obj
         except Announce.DoesNotExist:
             raise exceptions.NotFound('Not exist page')
-
-class MyProfile(generics.ListCreateAPIView):
-    serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated,)
-    pagination_class = None
-
-    def get_queryset(self):
-        owner = self.request.user
-        return Profile.objects.prefetch_related('my_apply').filter(owner__userid=owner.userid)
-    
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-class MyProfileDetail(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated, IsProfileOwner,)
-    queryset = Profile.objects.all()
 
 class MyApplied(generics.ListAPIView):
     serializer_class = MyAppliedSerializer
