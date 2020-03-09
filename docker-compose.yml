@@ -1,0 +1,21 @@
+version: '3'
+services:
+  db:
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - '7000:3306' # (컨테이너 외부 : 컨테이너 내부)
+    environment:
+       MYSQL_DATABASE: 'obbli'
+       MYSQL_USER: 'root'
+       MYSQL_PASSWORD: 'admin1!'
+       MYSQL_ROOT_PASSWORD: 'admin1!'
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
