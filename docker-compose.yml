@@ -2,7 +2,7 @@ version: '3'
 services:
   db:
     image: mysql:5.7
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
     ports:
       - '7000:3306' # (컨테이너 외부 : 컨테이너 내부)
     volumes: 
@@ -15,7 +15,7 @@ services:
        
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/usr/src/app
     ports:
