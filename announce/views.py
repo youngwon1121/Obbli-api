@@ -7,8 +7,26 @@ from resume.models import Resume
 from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
 from .models import Announce, Applying, Comment
 from .permissions import HaveApplied, IsAnnounceOwner, IsCommentOwner
+from rest_framework import viewsets
+from rest_framework import status
 
 User = get_user_model()
+
+class AnnounceViewSet(viewsets.GenericViewSet):
+
+    def list(self, request):
+        queryset = Announce.objects.all()
+        serializer = AnnounceSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retreive(self, request, pk):
+        pass
+
+    def create(self, request):
+        serializer = AnnounceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class AnnounceList(generics.ListCreateAPIView):
     serializer_class = AnnounceSerializerForList

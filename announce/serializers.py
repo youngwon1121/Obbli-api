@@ -27,6 +27,14 @@ class AnnounceSerializerForList(serializers.ModelSerializer):
         fields = ('id', 'url', 'title', 'writer', 'instrumental_type', 'deadline', 'pay')
 
 class AnnounceSerializer(serializers.ModelSerializer):
+    writer_name = serializers.CharField(source='writer.username', read_only=True)
+    instrument_name = serializers.CharField(source='instrument.name', read_only=True)
+
+    class Meta:
+        model = Announce
+        fields = '__all__'
+
+class AnnounceSerializer2(serializers.ModelSerializer):
     writer = serializers.ReadOnlyField(source='writer.username')
     comments = CommentSerializer(many=True)
     instrumental_type = serializers.CharField(source='get_instrumental_type_display')
