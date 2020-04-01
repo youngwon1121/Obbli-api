@@ -6,6 +6,9 @@ from django.db import models
 class InstrumentClassification(models.Model):
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 #악기
 class Instrument(models.Model):
     classification = models.ForeignKey(InstrumentClassification, on_delete=models.PROTECT)
