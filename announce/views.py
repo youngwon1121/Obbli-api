@@ -12,7 +12,7 @@ from rest_framework import status
 
 User = get_user_model()
 
-class AnnounceViewSet(viewsets.GenericViewSet):
+class AnnounceViewSet(viewsets.ViewSet):
 
     def list(self, request):
         queryset = Announce.objects.all()
@@ -20,7 +20,9 @@ class AnnounceViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     def retreive(self, request, pk):
-        pass
+        obj = Announce.objects.get(pk=pk)
+        serializer = AnnounceSerializer(obj)
+        return Response(serializer.data)
 
     def create(self, request):
         serializer = AnnounceSerializer(data=request.data)

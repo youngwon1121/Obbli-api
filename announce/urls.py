@@ -2,6 +2,7 @@ from django.urls import include, path
 from .views import AnnounceViewSet, AnnounceList, AnnounceDetail, ApplyingAnnounce, CommentView, CommentDetail
 
 user_list = AnnounceViewSet.as_view({'get' : 'list', 'post' : 'create'})
+user_detail = AnnounceViewSet.as_view({'get' : 'retrieve'})
 
 app_name = 'announce'
 urlpatterns = [
