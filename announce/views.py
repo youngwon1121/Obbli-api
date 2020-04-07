@@ -4,7 +4,7 @@ from django.shortcuts import Http404
 from rest_framework import generics, exceptions
 from rest_framework.response import Response
 from resume.models import Resume
-from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
+from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer
 from .models import Announce, Applying, Comment
 from .permissions import HaveApplied, IsAnnounceOwner, IsCommentOwner
 from rest_framework import viewsets
@@ -14,13 +14,13 @@ User = get_user_model()
 
 class AnnounceViewSet(viewsets.ViewSet):
 
-    def list(self, request):
-        queryset = Announce.objects.all()
+    def list(self, request, *args, **kwargs):
+        queryset = Announce.objects.all().select_related('writer').select_related('instrument')
         serializer = AnnounceSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retreive(self, request, pk):
-        obj = Announce.objects.get(pk=pk)
+    def retreive(self, request, *args, **kwargs):
+        obj = Announce.objects.get(pk=kwargs['pk'])
         serializer = AnnounceSerializer(obj)
         return Response(serializer.data)
 
@@ -30,19 +30,19 @@ class AnnounceViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class AnnounceList(generics.ListCreateAPIView):
-    serializer_class = AnnounceSerializerForList
+class CommentViewSet(viewsets.ViewSet):
 
-    def get_queryset(self):
-        print(self.request.user)
-        if self.request.query_params.get('type') in dict(Announce.INSTRUMENTAL_TYPES):
-            return Announce.objects.filter(instrumental_type=self.request.query_params['type'])\
-                .select_related('writer').order_by('-created_at')
-                
-        return Announce.objects.select_related('writer').order_by('-created_at')
+    def list(self, request, *args, **kwargs):
+        queryset = Comment.objects.all()
+        serializer = CommentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        serializer.save(writer=self.request.user)
+    def create(self, request, *args, **kwargs):
+        request.data['announce'] = kwargs['pk']
+        serializer = CommentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer

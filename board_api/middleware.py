@@ -4,7 +4,5 @@ class DBConnectionMiddleware:
 		self.get_response = get_response
 
 	def __call__(self, request):
-		print('HELLO')
-		print(request.get_full_path())
 		response = self.get_response(request)
 		return response

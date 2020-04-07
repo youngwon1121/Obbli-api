@@ -1,37 +1,27 @@
 from rest_framework import serializers
 from .models import Announce, Applying, Comment
 
-class SubCommentSerializer(serializers.ModelSerializer):
-    writer = serializers.ReadOnlyField(source='writer.username')
-    class Meta:
-        model = Comment
-        fields = '__all__'
-
-class CommentSerializer(serializers.ModelSerializer):
-    writer = serializers.ReadOnlyField(source='writer.username')
-    replies = SubCommentSerializer(many=True, read_only=True)
-    class Meta:
-        model = Comment
-        read_only_fields = ('announce',)
-        fields = '__all__'
-
-class AnnounceSerializerForList(serializers.ModelSerializer):
-    writer = serializers.ReadOnlyField(source='writer.username')
-    #instrumental_type = serializers.CharField(source='get_instrumental_type_display')
-    url = serializers.HyperlinkedIdentityField(
-        view_name = 'announce:announce-detail'
-    )
-
-    class Meta:
-        model = Announce
-        fields = ('id', 'url', 'title', 'writer', 'instrumental_type', 'deadline', 'pay')
-
 class AnnounceSerializer(serializers.ModelSerializer):
     writer_name = serializers.CharField(source='writer.username', read_only=True)
     instrument_name = serializers.CharField(source='instrument.name', read_only=True)
 
     class Meta:
         model = Announce
+        fields = '__all__'
+
+class SubCommentSerializer(serializers.ModelSerializer):
+    writer_name = serializers.CharField(source='writer.username', read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = '__all__'
+
+class CommentSerializer(serializers.ModelSerializer):
+    wrtier_name = serializers.CharField(source='writer.username', read_only=True)
+    replies = SubCommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Comment
         fields = '__all__'
 
 class AnnounceSerializer2(serializers.ModelSerializer):
