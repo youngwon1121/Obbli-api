@@ -19,7 +19,7 @@ class AnnounceViewSet(viewsets.ViewSet):
         serializer = AnnounceSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retreive(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         obj = Announce.objects.get(pk=kwargs['pk'])
         serializer = AnnounceSerializer(obj)
         return Response(serializer.data)
@@ -30,19 +30,16 @@ class AnnounceViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class CommentViewSet(viewsets.ViewSet):
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = Comment.objects.all()
-        serializer = CommentSerializer(queryset, many=True)
-        return Response(serializer.data)
+    def get_queryset(self, *args, **kwargs):
+        return Comment.objects.filter(announce_id=self.kwargs['announce_pk'])
 
-    def create(self, request, *args, **kwargs):
-        request.data['announce'] = kwargs['pk']
-        serializer = CommentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status.HTTP_201_CREATED)
+    def get_object(self, *args, **kwargs):
+        queryset = self.get_queryset(*args, **kwargs)
+        return queryset.get(pk=self.kwargs['pk'])
+
 
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer
@@ -76,7 +73,7 @@ class CommentView(generics.CreateAPIView):
             parent = parent
         )
 
-class CommentDetail(generics.UpdateAPIView, generics.DestroyAPIView):
+class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     queryset = Comment.objects.all()
     permission_classes = (IsCommentOwner,)
