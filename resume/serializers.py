@@ -1,4 +1,7 @@
-class ResumeSerializer(serializers.ModelSerializer):
+from rest_framework import serializers
+from .models import ResumeTemplate, Resume
+
+class ResumeTemplateSerializer(serializers.ModelSerializer):
     selfie = serializers.ImageField(use_url=True, required=False)
     #fixed_selfie = serializers.SerializerMethodField()
 
@@ -9,7 +12,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         ret['selfie'].content_type
         ret['selfie'].file : BytesIO
         '''        
-        ret = super(ResumeSerializer, self).to_internal_value(data)
+        ret = super(ResumeTemplateSerializer, self).to_internal_value(data)
         if 'selfie' in ret:
             io = BytesIO()
 
@@ -28,6 +31,5 @@ class ResumeSerializer(serializers.ModelSerializer):
         return ret
 
     class Meta:
-        model = Profile
-        read_only_fields = ('owner', )
-        fields = ('owner', 'intro', 'selfie', 'id', )
+        model = ResumeTemplate
+        fields = '__all__'

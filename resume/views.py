@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from rest_framework import viewsets
+from rest_framework.views import *
 
 # Create your views here.
 
@@ -18,3 +20,9 @@ class MyProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated, IsProfileOwner,)
     queryset = Profile.objects.all()
+
+
+class Resume(generics.Viewset):
+
+    def create(self, request, *args, **kwargs):
+        pass
