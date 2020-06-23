@@ -32,3 +32,7 @@ class Announce(APITestCase):
 
 class Comment(APITestCase):
     url = reverse('announce:comment')
+
+'''
+TODO :: AnnounceSerializer TEST 구현
+'''

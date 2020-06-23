@@ -1,7 +1,6 @@
 from rest_framework import permissions
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseServerError
-from usermanager.models import Profile
 from .models import Announce
 
 class IsAnnounceOwner(permissions.BasePermission):

@@ -69,15 +69,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         return self.is_admin
 
-class Profile(models.Model):
-    owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='profiles')
-    intro = models.TextField()
-    awards = models.TextField(blank=True)
-    selfie = models.ImageField(default="me.jpg", blank=True, null=True)
-
-    def __str__(self):
-        return self.intro
-
 class ResetPW(models.Model):
     email = models.EmailField(max_length=255)
     hash_key = models.CharField(max_length=200)

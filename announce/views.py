@@ -3,26 +3,43 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import Http404
 from rest_framework import generics, exceptions
 from rest_framework.response import Response
-from usermanager.models import Profile
-from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer, AnnounceSerializerForList
+from resume.models import Resume
+from .serializers import AnnounceSerializer, ApplyingSerializer, CommentSerializer
 from .models import Announce, Applying, Comment
 from .permissions import HaveApplied, IsAnnounceOwner, IsCommentOwner
+from rest_framework import viewsets
+from rest_framework import status
 
 User = get_user_model()
 
-class AnnounceList(generics.ListCreateAPIView):
-    serializer_class = AnnounceSerializerForList
+class AnnounceViewSet(viewsets.ViewSet):
 
-    def get_queryset(self):
-        print(self.request.user)
-        if self.request.query_params.get('type') in dict(Announce.INSTRUMENTAL_TYPES):
-            return Announce.objects.filter(instrumental_type=self.request.query_params['type'])\
-                .select_related('writer').order_by('-created_at')
-                
-        return Announce.objects.select_related('writer').order_by('-created_at')
+    def list(self, request, *args, **kwargs):
+        queryset = Announce.objects.all().select_related('writer').select_related('instrument')
+        serializer = AnnounceSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        serializer.save(writer=self.request.user)
+    def retrieve(self, request, *args, **kwargs):
+        obj = Announce.objects.get(pk=kwargs['pk'])
+        serializer = AnnounceSerializer(obj)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = AnnounceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return Comment.objects.filter(announce_id=self.kwargs['announce_pk'])
+
+    def get_object(self, *args, **kwargs):
+        queryset = self.get_queryset(*args, **kwargs)
+        return queryset.get(pk=self.kwargs['pk'])
+
 
 class AnnounceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnounceSerializer
@@ -56,7 +73,7 @@ class CommentView(generics.CreateAPIView):
             parent = parent
         )
 
-class CommentDetail(generics.UpdateAPIView, generics.DestroyAPIView):
+class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     queryset = Comment.objects.all()
     permission_classes = (IsCommentOwner,)
@@ -68,7 +85,7 @@ class ApplyingAnnounce(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         #profile owner check
-        profile = Profile.objects.select_related('owner').get(pk=self.request.data.get('profile'))
+        profile = Resume.objects.select_related('owner').get(pk=self.request.data.get('profile'))
         if profile.owner != self.request.user:
             raise exceptions.ParseError()
 
